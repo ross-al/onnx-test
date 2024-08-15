@@ -22,10 +22,11 @@ jobs:
         aws-secret-access-key: ${{ secrets.MODEL_STORE_AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
 
-    - name: Set up kubectl
-      uses: actions-hub/kubectl@master
-      with:
-        version: '1.19.6'
+    - name: Install the latest stable version of kubectl
+      run: |
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x ./kubectl
+        sudo mv ./kubectl /usr/local/bin/kubectl
 
     - name: Update kubeconfig
       run: aws eks update-kubeconfig --name mlops-lite-cluster --region us-east-1
