@@ -9,4 +9,5 @@ data:
   POSTGRES_HOST: mlflow-postgres.clkyuqewyewf.us-east-1.rds.amazonaws.com
   POSTGRES_DATABASE: mlflowdb
   S3_BUCKET: https://s3.us-east-1.amazonaws.com/mlflow-lite-bucket
+  AWS_REGION: us-east-1
 
