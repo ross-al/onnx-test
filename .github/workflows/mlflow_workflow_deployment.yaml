@@ -43,6 +43,9 @@ jobs:
       run: |
         ENDPOINT=$(kubectl get svc mlflow-server -n mlflow -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
         echo "MLFLOW_ENDPOINT=$ENDPOINT" >> $GITHUB_ENV
+    
+    - name: Debug MLFLOW_ENDPOINT
+      run: echo "MLFLOW_ENDPOINT is $MLFLOW_ENDPOINT"
 
     - name: Post MLflow endpoint to API
       env:
@@ -51,4 +54,4 @@ jobs:
       run: |
         curl -X POST "http://acd67e5cdf534410cafb6c6785932ffe-266168135.us-east-1.elb.amazonaws.com:5000/api/internal/model-store/service-endpoint" \ 
         -H "Content-Type: application/json" \
-        -d "{\"mlflowEndpoint\": \"${MLFLOW_ENDPOINT}\", \"userId\": \"66ba2d140e7ebe6354581cf9\"}"
+        -d "{\"endpoint\": \"${MLFLOW_ENDPOINT}\", \"userId\": \"66ba2d140e7ebe6354581cf9\"}"
