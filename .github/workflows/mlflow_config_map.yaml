@@ -4,8 +4,8 @@ metadata:
   name: mlflow-config
   namespace: mlflow
 data:
-  POSTGRES_USERNAME: mlfow_admin
-  POSTGRES_PASSWORD: JkOt4KMi7cUiDAs7gW7A
+  POSTGRES_USERNAME: mflow_admin
+  POSTGRES_PASSWORD: gafdiv-Xuwdi1-coknuf
   POSTGRES_HOST: mlflow-postgres.clkyuqewyewf.us-east-1.rds.amazonaws.com
   POSTGRES_DATABASE: mlflowdb
   S3_BUCKET: https://s3.us-east-1.amazonaws.com/mlflow-lite-bucket
