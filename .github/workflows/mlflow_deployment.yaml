@@ -16,6 +16,7 @@ spec:
       containers:
       - name: mlflow-server
         image: rossal/mlflow-postgres:latest  # Custom mlflow image with Postgres support
+        imagePullPolicy: Always # Always pull the latest image even if no yaml changes
         ports:
         - containerPort: 5000
         env:
