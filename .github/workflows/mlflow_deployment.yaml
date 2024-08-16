@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: mlflow-server
-        image: rossal/mlflow-postgres:latest  # Custom mlflow image with Postgres support
+        image: public.ecr.aws/c3s1g1e1/mlops-lite:latest # Custom mlflow image with Postgres support (using x86-64 architecture for cloud deployment)
         imagePullPolicy: Always # Always pull the latest image even if no yaml changes
         ports:
         - containerPort: 5000
