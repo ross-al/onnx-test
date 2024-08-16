@@ -49,6 +49,7 @@ spec:
             configMapKeyRef:
               name: mlflow-config
               key: AWS_REGION
+        command: ["mlflow", "server"]  # Explicitly set the command to run the mlflow server
         args:
         - --backend-store-uri=postgresql://$(POSTGRES_USERNAME):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST)/$(POSTGRES_DATABASE)
         - --default-artifact-root=$(S3_BUCKET)
