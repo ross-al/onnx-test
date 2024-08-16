@@ -15,12 +15,11 @@ spec:
     spec:
       containers:
       - name: mlflow-server
-        image: ghcr.io/mlflow/mlflow:latest
-        command: ["mlflow", "server"]
+        image: rossal/mlflow-postgres:latest  # Custom mlflow image with Postgres support
         ports:
         - containerPort: 5000
         env:
-        - name: MLFLOW_TRACKING_URI
+        - name: POSTGRES_USERNAME
           valueFrom:
             configMapKeyRef:
               name: mlflow-config
@@ -40,7 +39,7 @@ spec:
             configMapKeyRef:
               name: mlflow-config
               key: POSTGRES_DATABASE
-        - name: ARTIFACT_URI
+        - name: S3_BUCKET
           valueFrom:
             configMapKeyRef:
               name: mlflow-config
@@ -53,3 +52,4 @@ spec:
         args:
         - --backend-store-uri=postgresql://$(POSTGRES_USERNAME):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST)/$(POSTGRES_DATABASE)
         - --default-artifact-root=$(S3_BUCKET)
+        - --host=0.0.0.0
