@@ -50,7 +50,6 @@ jobs:
     - name: Post MLflow endpoint to API
       env:
         MLFLOW_ENDPOINT: ${{ env.MLFLOW_ENDPOINT }}
-        USER_ID: ${{ env.USER_ID }}
       run: |
         curl -X POST "http://acd67e5cdf534410cafb6c6785932ffe-266168135.us-east-1.elb.amazonaws.com:5000/api/internal/model-store/service-endpoint" \ 
         -H "Content-Type: application/json" \
