@@ -94,11 +94,12 @@ jobs:
       
       - name: Install KServe
         run: |
-          kubectl apply -f https://github.com/kserve/kserve/releases/download/v0.13.0/kserve.yaml
+          kubectl apply -f https://github.com/kserve/kserve/releases/download/v0.8.0/kserve.yaml
 
       - name: Install KServe Built-in ClusterServingRuntimes
         run: |
-          kubectl apply -f https://github.com/kserve/kserve/releases/download/v0.13.0/kserve-cluster-serving-runtime.yaml
+          kubectl apply -f https://github.com/kserve/kserve/releases/download/v0.8.0/kserve-runtimes.yaml
+
 
       - name: Install the Knative Istio controller 
         run: |
