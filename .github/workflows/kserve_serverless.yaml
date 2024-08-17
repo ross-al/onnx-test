@@ -33,17 +33,10 @@ jobs:
         uses: sigstore/cosign-installer@main
         with:
           cosign-release: "v2.0.2"
-          
-      - name: Initialize cosign
-        run: |
-          cosign initialize
 
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Install istioctl
-        run: curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.14.1 sh - && sudo mv istio-1.14.1/bin/istioctl /usr/local/bin/
-
+ 
       - name: Verify Knative Serving images
         run: |
           curl -sSL https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-core.yaml \
@@ -55,27 +48,14 @@ jobs:
 
       - name: Install Knative Serving CRDs
         run: |
-          kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.14.1/serving-crds.yaml
+          kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-crds.yaml
 
       - name: Install Knative Serving core components
         run: |
-          kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.14.1/serving-core.yaml
+          kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-core.yaml
 
-      - name: Install Kourier
-        run: |
-          kubectl apply -f https://github.com/knative/net-kourier/releases/download/knative-v1.14.0/kourier.yaml
-          kubectl patch configmap/config-network \
-            --namespace knative-serving \
-            --type merge \
-            --patch '{"data":{"ingress-class":"kourier.ingress.networking.knative.dev"}}'
-
-      - name: Verify Knative Serving installation
-        run: |
-          kubectl get pods -n knative-serving
-
-      - name: Fetch Kourier External IP
-        run: |
-          kubectl --namespace kourier-system get service kourier
+      - name: Install istioctl
+        run: curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.23.0 TARGET_ARCH=x86_64 sh - && sudo mv istio-1.23.0/bin/istioctl /usr/local/bin/
 
       - name: Install Istio
         run: |
@@ -83,7 +63,7 @@ jobs:
 
       - name: Install Knative Istio controller
         run: |
-          kubectl apply -f https://github.com/knative/net-istio/releases/download/knative-v1.14.1/net-istio.yaml
+          kubectl apply -f https://github.com/knative/net-istio/releases/download/knative-v1.15.1/net-istio.yaml
 
       - name: Enable sidecar injection on knative-serving namespace
         run: |
@@ -109,7 +89,7 @@ jobs:
       - name: Install cert-manager
         run: |
           kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.1/cert-manager.yaml
-
+      
       - name: Install KServe
         run: |
           kubectl apply -f https://github.com/kserve/kserve/releases/download/v0.13.0/kserve.yaml
@@ -117,3 +97,35 @@ jobs:
       - name: Install KServe Built-in ClusterServingRuntimes
         run: |
           kubectl apply -f https://github.com/kserve/kserve/releases/download/v0.13.0/kserve-cluster-serving-runtime.yaml
+
+      - name: Install the Knative Istio controller 
+        run: |
+          kubectl apply -f https://github.com/knative/net-istio/releases/download/knative-v1.15.1/net-istio.yaml
+
+      - name: Fetch the External IP address
+        run: |
+          kubectl --namespace istio-system get service istio-ingressgateway
+
+      - name: Confirm Knative installation
+        run: | 
+          kubectl get pods -n knative-serving
+
+
+      - name: Configure Knative DNS
+        run: |
+          kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-default-domain.yaml
+
+
+      - name: Enable Horiztonal Scaling
+        run: |
+          kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-hpa.yaml
+
+
+
+    
+
+
+
+
+
+
