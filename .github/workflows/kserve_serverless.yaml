@@ -33,6 +33,10 @@ jobs:
         uses: sigstore/cosign-installer@main
         with:
           cosign-release: "v2.0.2"
+          
+      - name: Initialize cosign
+        run: |
+          cosign initialize
 
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
@@ -42,7 +46,7 @@ jobs:
 
       - name: Verify Knative Serving images
         run: |
-          curl -sSL https://github.com/knative/serving/releases/download/knative-v1.14.1/serving-core.yaml \
+          curl -sSL https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-core.yaml \
             | grep 'gcr.io/' | awk '{print $2}' | sort | uniq \
             | xargs -n 1 \
               cosign verify -o text \
