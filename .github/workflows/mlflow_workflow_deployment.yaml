@@ -48,8 +48,16 @@ jobs:
       - name: Get MLflow service endpoint
         id: mlflow-endpoint
         run: |
-          ENDPOINT=$(kubectl get svc mlflow-server -n mlflow -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-          echo "MLFLOW_ENDPOINT=$ENDPOINT" >> $GITHUB_ENV
+          while true; do
+            ENDPOINT=$(kubectl get svc mlflow-server -n mlflow -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            if [ -n "$ENDPOINT" ]; then
+              echo "MLFLOW_ENDPOINT=$ENDPOINT" >> $GITHUB_ENV
+              break
+            else
+              echo "Waiting for LoadBalancer IP/Hostname to be assigned..."
+              sleep 10
+            fi
+          done
 
       - name: Debug MLFLOW_ENDPOINT
         run: echo "MLFLOW_ENDPOINT is $MLFLOW_ENDPOINT"
