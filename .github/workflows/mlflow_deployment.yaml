@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow-server
+  namespace: mlflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlflow-server
+  template:
+    metadata:
+      labels:
+        app: mlflow-server
+    spec:
+      initContainers:
+      - name: mlflow-db-upgrade
+        image: public.ecr.aws/c3s1g1e1/mlops-lite:latest # Custom mlflow image with MYSQL support (using x86-64 architecture for cloud deployment)
+        command: ["mlflow", "db", "upgrade"]
+        args:
+        - "mysql+pymysql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST)/$(DB_DATABASE)"
+        env:
+        - name: DB_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: mlflow-config
+              key: DB_USERNAME
+        - name: DB_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: mlflow-config
+              key: DB_PASSWORD
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: mlflow-config
+              key: DB_HOST
+        - name: DB_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: mlflow-config
+              key: DB_DATABASE
+      
+      containers:
+      - name: mlflow-server
+        image: public.ecr.aws/c3s1g1e1/mlops-lite:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+        env:
+        - name: DB_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: mlflow-config
+              key: DB_USERNAME
+        - name: DB_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: mlflow-config
+              key: DB_PASSWORD
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: mlflow-config
+              key: DB_HOST
+        - name: DB_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: mlflow-config
+              key: DB_DATABASE
+        - name: S3_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: mlflow-config
+              key: S3_BUCKET
+        - name: AWS_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: mlflow-config
+              key: AWS_REGION
+        command: ["mlflow", "server"]
+        args:
+        - --backend-store-uri=mysql+pymysql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST)/$(DB_DATABASE)
+        - --default-artifact-root=$(S3_BUCKET)
+        - --host=0.0.0.0
