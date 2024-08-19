@@ -80,6 +80,6 @@ spec:
               key: AWS_REGION
         command: ["mlflow", "server"]
         args:
-        - --backend-store-uri=mysql+pymysql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST)/$(DB_DATABASE)
-        - --artifacts-destination=$(S3_BUCKET)
-        - --host=0.0.0.0
+        - --backend-store-uri mysql+pymysql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST)/$(DB_DATABASE)
+        - --artifacts-destination s3://$(S3_BUCKET)
+        - --host 0.0.0.0
