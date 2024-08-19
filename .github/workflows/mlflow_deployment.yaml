@@ -81,5 +81,5 @@ spec:
         command: ["mlflow", "server"]
         args:
         - --backend-store-uri=mysql+pymysql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST)/$(DB_DATABASE)
-        - --default-artifact-root=$(S3_BUCKET)
+        - --artifacts-destination=$(S3_BUCKET)
         - --host=0.0.0.0
