@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mlflow-config
+  namespace: mlflow
+data:
+  DB_USERNAME: admin
+  DB_PASSWORD: MhN7z5KjO4FNqfx87Eqt
+  DB_HOST: mlflow-mysql.clkyuqewyewf.us-east-1.rds.amazonaws.com
+  DB_DATABASE: mlflowdb
+  S3_BUCKET: https://s3.us-east-1.amazonaws.com/mlflow-lite-bucket
+  AWS_REGION: us-east-1
+
