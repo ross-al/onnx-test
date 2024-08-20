@@ -13,34 +13,6 @@ spec:
       labels:
         app: mlflow-server
     spec:
-      initContainers:
-      - name: mlflow-db-upgrade
-        image: public.ecr.aws/c3s1g1e1/mlops-lite:latest
-        command: ["mlflow", "db", "upgrade"]
-        args:
-        - "mysql+pymysql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST)/$(DB_DATABASE)"
-        env:
-        - name: DB_USERNAME
-          valueFrom:
-            configMapKeyRef:
-              name: mlflow-config
-              key: DB_USERNAME
-        - name: DB_PASSWORD
-          valueFrom:
-            configMapKeyRef:
-              name: mlflow-config
-              key: DB_PASSWORD
-        - name: DB_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: mlflow-config
-              key: DB_HOST
-        - name: DB_DATABASE
-          valueFrom:
-            configMapKeyRef:
-              name: mlflow-config
-              key: DB_DATABASE
-      
       containers:
       - name: mlflow-server
         image: public.ecr.aws/c3s1g1e1/mlops-lite:latest
