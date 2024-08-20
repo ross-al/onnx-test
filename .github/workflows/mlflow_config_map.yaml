@@ -8,6 +8,6 @@ data:
   DB_PASSWORD: Zcfx1zWBLLZGmP7wP4Ws
   DB_HOST: mlflow-mysql-v2.clkyuqewyewf.us-east-1.rds.amazonaws.com
   DB_DATABASE: mlflowdb
-  S3_BUCKET: https://s3.us-east-1.amazonaws.com/mlflow-lite-bucket
+  S3_BUCKET: s3://mlflow-lite-bucket/
   AWS_REGION: us-east-1
 
