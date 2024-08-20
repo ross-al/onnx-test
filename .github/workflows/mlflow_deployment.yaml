@@ -15,7 +15,7 @@ spec:
     spec:
       initContainers:
       - name: mlflow-db-upgrade
-        image: public.ecr.aws/c3s1g1e1/mlops-lite:latest # Custom mlflow image with MYSQL support (using x86-64 architecture for cloud deployment)
+        image: public.ecr.aws/c3s1g1e1/mlops-lite:latest
         command: ["mlflow", "db", "upgrade"]
         args:
         - "mysql+pymysql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST)/$(DB_DATABASE)"
@@ -78,8 +78,12 @@ spec:
             configMapKeyRef:
               name: mlflow-config
               key: AWS_REGION
+        - name: MLFLOW_ARTIFACT_ROOT
+          value: "s3://$(S3_BUCKET)/mlflow-artifacts"
         command: ["mlflow", "server"]
         args:
         - --backend-store-uri=mysql+pymysql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST)/$(DB_DATABASE)
-        - --artifacts-destination=s3://$(S3_BUCKET)
+        - --artifacts-destination=s3://$(S3_BUCKET)/mlflow-artifacts
         - --host=0.0.0.0
+        - --port=5000
+        - --serve-artifacts
