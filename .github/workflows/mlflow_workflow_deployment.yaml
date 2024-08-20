@@ -1,0 +1,72 @@
+name: Deploy MLflow to EKS
+
+'on':
+  repository_dispatch:
+    types:
+      - deploy-mlflow
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      USER_ID: 66ba2d140e7ebe6354581cf9 # replaced in python logic
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.MODEL_STORE_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.MODEL_STORE_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Install the latest stable version of kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x ./kubectl
+          sudo mv ./kubectl /usr/local/bin/kubectl
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name mlops-lite-cluster --region us-east-1
+      
+      - name: Set USER_ID environment variable
+        run: echo "USER_ID=66ba2d140e7ebe6354581cf9" >> $GITHUB_ENV
+      
+      - name: Debug USER_ID
+        run: echo "USER_ID is ${{ env.USER_ID }}"
+
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f .github/workflows/mlflow_namespace.yaml
+          kubectl apply -f .github/workflows/mlflow_config_map.yaml
+          kubectl apply -f .github/workflows/mlflow_deployment.yaml
+          kubectl apply -f .github/workflows/mlflow_service.yaml
+
+      - name: Get MLflow service endpoint
+        id: mlflow-endpoint
+        run: |
+          while true; do
+            ENDPOINT=$(kubectl get svc mlflow-server -n mlflow -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            if [ -n "$ENDPOINT" ]; then
+              echo "MLFLOW_ENDPOINT=$ENDPOINT" >> $GITHUB_ENV
+              break
+            else
+              echo "Waiting for LoadBalancer IP/Hostname to be assigned..."
+              sleep 10
+            fi
+          done
+
+      - name: Debug MLFLOW_ENDPOINT
+        run: echo "MLFLOW_ENDPOINT is $MLFLOW_ENDPOINT"
+     
+      - name: Post MLflow endpoint to API
+        env:
+          MLFLOW_ENDPOINT: ${{ env.MLFLOW_ENDPOINT }}
+          USER_ID: ${{ env.USER_ID }}
+        run: |
+          curl -X POST "http://acd67e5cdf534410cafb6c6785932ffe-266168135.us-east-1.elb.amazonaws.com:5000/api/internal/model-store/service-endpoint" \
+          -H "Content-Type: application/json" \
+          -d "{\"endpoint\": \"http://$MLFLOW_ENDPOINT\", \"userId\": \"$USER_ID\"}"
