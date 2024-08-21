@@ -51,11 +51,11 @@ spec:
               name: mlflow-config
               key: AWS_REGION
         - name: MLFLOW_ARTIFACT_ROOT
-          value: "s3://$(S3_BUCKET)/mlflow-artifacts"
+          value: "$(S3_BUCKET)/mlflow-artifacts"
         command: ["mlflow", "server"]
         args:
         - --backend-store-uri=mysql+pymysql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST)/$(DB_DATABASE)
-        - --artifacts-destination=s3://$(S3_BUCKET)/mlflow-artifacts
+        - --artifacts-destination=$(S3_BUCKET)/mlflow-artifacts
         - --host=0.0.0.0
         - --port=5000
         - --serve-artifacts
