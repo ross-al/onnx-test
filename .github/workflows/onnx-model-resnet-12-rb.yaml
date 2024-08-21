@@ -1,0 +1,16 @@
+apiVersion: "serving.kserve.io/v1beta1"
+kind: "InferenceService"
+metadata:
+  name: "onnx-model-resnet-12-rb"  # Placholder. Actual name is used to identify the resource in Kubernetes
+  namespace: "onnx-model-resnet-12-rb"  # Specify the namespace here
+spec:
+  predictor:
+    onnx: 
+      storageUri: "s3://mlflow-lite-bucket//mlflow-artifacts/3/9c67eb39121b42a8a0537c838f410023/artifacts/model" # use .replace() in python script
+      resources:
+        requests:
+          cpu: "500m"          # 500 millicores of CPU
+          memory: "1Gi"        # 1 GiB of memory
+        limits:
+          cpu: "1"             # 1 core of CPU
+          memory: "2Gi"        # 2 GiB of memory
