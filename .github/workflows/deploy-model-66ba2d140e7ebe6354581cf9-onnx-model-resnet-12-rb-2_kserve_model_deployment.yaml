@@ -45,23 +45,26 @@ jobs:
       - name: Verify InferenceService Deployment
         run: kubectl get inferenceservice ${{ env.MODEL_NAME }} -n ${{ env.NAMESPACE }}
 
-      - name: Get External IP of Istio Ingress Gateway
+      - name: Get External IP or Hostname of Istio Ingress Gateway
         id: get-ip
         run: |
           for i in {1..10}; do
+            HOSTNAME=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
             IP=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-            if [ -z "$IP" ]; then
-              echo "Waiting for external IP..."
-              sleep 10
-            else
+            if [ -n "$IP" ]; then
               echo "::set-output name=ip::$IP"
               break
+            elif [ -n "$HOSTNAME" ]; then
+              echo "::set-output name=ip::$HOSTNAME"
+              break
+            else
+              echo "Waiting for external IP or hostname..."
+              sleep 10
             fi
           done
 
-      - name: Send InferenceService IP to MLOps Lite Core Service Endpoint
+      - name: Send InferenceService IP or Hostname to MLOps Lite Core Service Endpoint
         run: |
           curl -X POST ${{ env.MLOPS_SERVICE_CORE_ENDPOINT }} \
           -H "Content-Type: application/json" \
           -d "{\"endpoint\": \"${{ steps.get-ip.outputs.ip }}\", \"userId\": \"${{ env.USER_ID }}\", \"modelName\": \"${{ env.MODEL_NAME }}\"}"
-
