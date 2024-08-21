@@ -37,14 +37,24 @@ jobs:
         run: aws eks update-kubeconfig --region us-east-1 --name mlops-lite-cluster # .replace() with python logic
 
       - name: Apply InferenceService YAML
-        run: kubectl apply -f ${{ env.MODEL_NAME }}.yaml
+        run: kubectl apply -f .github/workflows/${{ env.MODEL_NAME }}.yaml
 
       - name: Verify InferenceService Deployment
         run: kubectl get inferenceservice ${{ env.MODEL_NAME }} -n ${{ env.NAMESPACE }}
 
       - name: Get External IP of Istio Ingress Gateway
         id: get-ip
-        run: echo "::set-output name=ip::$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+        run: |
+          for i in {1..10}; do
+            IP=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            if [ -z "$IP" ]; then
+              echo "Waiting for external IP..."
+              sleep 10
+            else
+              echo "::set-output name=ip::$IP"
+              break
+            fi
+          done
 
       - name: Send InferenceService IP to MLOps Lite Core Service Endpoint
         run: |
