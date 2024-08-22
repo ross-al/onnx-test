@@ -3,7 +3,7 @@ name: Deploy Model to KServe
 on:
   repository_dispatch:
     types: 
-      - deploy-model-66ba2d140e7ebe6354581cf9-onnx-model-resnet-12-rb-2
+      - deploy-model-66ba2d140e7ebe6354581cf9-onnx-model-resnet-12-rb-2 # .replace() with python logic
 
 jobs:
   deploy-onnx-model:
@@ -14,8 +14,9 @@ jobs:
       MODEL_NAME: onnx-model-resnet-12-rb # .replace() with python logic
       MLOPS_CORE_SERVICE_ENDPOINT: http://acd67e5cdf534410cafb6c6785932ffe-266168135.us-east-1.elb.amazonaws.com:5000/api/internal/model-store/save-deployed-model # .replace() with python logic
       NAMESPACE: onnx-model-resnet-12-rb   # .replace() with python logic
-
-  
+      ISTIO_GATEWAY: deploy-model-66ba2d140e7ebe6354581cf9-onnx-model-resnet-12-rb-2_istio_service.yaml # .replace() with python logic
+      VIRTUAL_SERVICE: deploy-model-66ba2d140e7ebe6354581cf9-onnx-model-resnet-12-rb-2_virtual_service.yaml # .replace() with python logic
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -45,25 +46,17 @@ jobs:
       - name: Verify InferenceService Deployment
         run: kubectl get inferenceservice ${{ env.MODEL_NAME }} -n ${{ env.NAMESPACE }}
 
-      - name: Get External IP or Hostname of Istio Ingress Gateway
-        id: get-ip
-        run: |
-          for i in {1..10}; do
-            HOSTNAME=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-            IP=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-            if [ -n "$IP" ]; then
-              echo "::set-output name=ip::$IP"
-              break
-            elif [ -n "$HOSTNAME" ]; then
-              echo "::set-output name=ip::$HOSTNAME"
-              break
-            else
-              echo "Waiting for external IP or hostname..."
-              sleep 10
-            fi
-          done
+      - name: Apply Istio Gateway
+        run: kubectl apply -f .github/workflows/${{ env.ISTIO_GATEWAY }}
 
-      - name: Send InferenceService IP or Hostname to MLOps Lite Core Service Endpoint
+      - name: Apply Istio VirtualService
+        run: kubectl apply -f .github/workflows/${{ env.VIRTUAL_SERVICE }}
+
+      - name: Get External IP of Istio Ingress Gateway
+        id: get-ip
+        run: echo "::set-output name=ip::$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+
+      - name: Send InferenceService IP to MLOps Lite Core Service Endpoint
         run: |
           curl -X POST ${{ env.MLOPS_SERVICE_CORE_ENDPOINT }} \
           -H "Content-Type: application/json" \
