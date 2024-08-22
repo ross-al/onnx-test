@@ -1,0 +1,19 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: "onnx-model-1724343549914"
+  namespace: "onnx-model-1724343549914"
+spec:
+  predictor:
+    model:
+      modelFormat:
+        name: onnx
+      protocolVersion: v2
+      storageUri: "s3://mlflow-lite-bucket/mlflow-artifacts/4/36f5461f638a49649e5b2f7d8e5347da/artifacts/model"
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+        limits:
+          cpu: "1"
+          memory: "2Gi"
