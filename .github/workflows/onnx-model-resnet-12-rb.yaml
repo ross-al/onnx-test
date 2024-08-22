@@ -17,7 +17,12 @@ spec:
         limits:
           cpu: "1"
           memory: "2Gi"
-    minReplicas: 1
-    maxReplicas: 5
-    autoscaler:
-      targetCpuUtilizationPercentage: 80
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
