@@ -52,6 +52,11 @@ jobs:
         run: |
           kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-crds.yaml
 
+      - name: Check and Install Gateway CRD
+        run: |
+          kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+          kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
+
       - name: Install Knative Serving core components
         run: |
           kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-core.yaml
@@ -117,6 +122,10 @@ jobs:
         run: |
           kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-default-domain.yaml
 
+      - name: Apply Kserve cluster role
+        run: |
+          kubectl apply -f .github/workflows/kserve_cluster_role.yaml
+          kubectl apply -f .github/workflows/kserve_cluster_role_binding.yaml
 
       - name: Enable Horiztonal Scaling
         run: |
