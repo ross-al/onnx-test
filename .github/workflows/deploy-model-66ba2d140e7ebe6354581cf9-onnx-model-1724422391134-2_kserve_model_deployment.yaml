@@ -40,17 +40,17 @@ jobs:
       - name: Applye Model namespace YAML
         run: kubectl apply -f .github/workflows/${{ env.NAMESPACE }}_namespace.yaml
 
-      - name: Apply InferenceService YAML
-        run: kubectl apply -f .github/workflows/${{ env.MODEL_NAME }}_kserve_model_inference_service.yaml
-
-      - name: Verify InferenceService Deployment
-        run: kubectl get inferenceservice ${{ env.MODEL_NAME }} -n ${{ env.NAMESPACE }}
-
       - name: Apply Istio Gateway
         run: kubectl apply -f .github/workflows/${{ env.ISTIO_GATEWAY }}
 
       - name: Apply Istio VirtualService
         run: kubectl apply -f .github/workflows/${{ env.VIRTUAL_SERVICE }}
+
+      - name: Apply InferenceService YAML
+        run: kubectl apply -f .github/workflows/${{ env.MODEL_NAME }}_kserve_model_inference_service.yaml
+
+      - name: Verify InferenceService Deployment
+        run: kubectl get inferenceservice ${{ env.MODEL_NAME }} -n ${{ env.NAMESPACE }}
 
       - name: Get External IP of Istio Ingress Gateway
         id: get-ip
@@ -58,6 +58,6 @@ jobs:
 
       - name: Send InferenceService IP to MLOps Lite Core Service Endpoint
         run: |
-          curl -X POST ${{ env.MLOPS_SERVICE_CORE_ENDPOINT }} \
+          curl -X POST "${{ env.MLOPS_CORE_SERVICE_ENDPOINT }}" \
           -H "Content-Type: application/json" \
           -d "{\"endpoint\": \"${{ steps.get-ip.outputs.ip }}\", \"userId\": \"${{ env.USER_ID }}\", \"modelName\": \"${{ env.MODEL_NAME }}\"}"
