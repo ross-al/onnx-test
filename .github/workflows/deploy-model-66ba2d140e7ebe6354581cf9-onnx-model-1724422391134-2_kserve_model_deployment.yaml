@@ -1,0 +1,63 @@
+name: Deploy Model to KServe
+
+on:
+  repository_dispatch:
+    types: 
+      - deploy-model-66ba2d140e7ebe6354581cf9-onnx-model-1724422391134-2 # .replace() with python logic
+
+jobs:
+  deploy-onnx-model:
+    runs-on: ubuntu-latest
+
+    env:
+      USER_ID: 66ba2d140e7ebe6354581cf9 # .replace() with python logic
+      MODEL_NAME: onnx-model-1724422391134 # .replace() with python logic
+      MLOPS_CORE_SERVICE_ENDPOINT: http://acd67e5cdf534410cafb6c6785932ffe-266168135.us-east-1.elb.amazonaws.com:5000/api/internal/model-store/deployed-model # .replace() with python logic
+      NAMESPACE: onnx-model-1724422391134   # .replace() with python logic
+      ISTIO_GATEWAY: deploy-model-66ba2d140e7ebe6354581cf9-onnx-model-1724422391134-2_istio_service.yaml # .replace() with python logic
+      VIRTUAL_SERVICE: deploy-model-66ba2d140e7ebe6354581cf9-onnx-model-1724422391134-2_virtual_service.yaml # .replace() with python logic
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.MODEL_DEPLOYMENT_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.MODEL_DEPLOYMENT_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1 # .replace() with python logic
+
+      - name: Install the latest stable version of kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x ./kubectl
+          sudo mv ./kubectl /usr/local/bin/kubectl
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --region us-east-1 --name mlops-lite-cluster # .replace() with python logic
+
+      - name: Applye Model namespace YAML
+        run: kubectl apply -f .github/workflows/${{ env.NAMESPACE }}_namespace.yaml
+
+      - name: Apply InferenceService YAML
+        run: kubectl apply -f .github/workflows/${{ env.MODEL_NAME }}_kserve_model_inference_service.yaml
+
+      - name: Verify InferenceService Deployment
+        run: kubectl get inferenceservice ${{ env.MODEL_NAME }} -n ${{ env.NAMESPACE }}
+
+      - name: Apply Istio Gateway
+        run: kubectl apply -f .github/workflows/${{ env.ISTIO_GATEWAY }}
+
+      - name: Apply Istio VirtualService
+        run: kubectl apply -f .github/workflows/${{ env.VIRTUAL_SERVICE }}
+
+      - name: Get External IP of Istio Ingress Gateway
+        id: get-ip
+        run: echo "::set-output name=ip::$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+
+      - name: Send InferenceService IP to MLOps Lite Core Service Endpoint
+        run: |
+          curl -X POST ${{ env.MLOPS_SERVICE_CORE_ENDPOINT }} \
+          -H "Content-Type: application/json" \
+          -d "{\"endpoint\": \"${{ steps.get-ip.outputs.ip }}\", \"userId\": \"${{ env.USER_ID }}\", \"modelName\": \"${{ env.MODEL_NAME }}\"}"
