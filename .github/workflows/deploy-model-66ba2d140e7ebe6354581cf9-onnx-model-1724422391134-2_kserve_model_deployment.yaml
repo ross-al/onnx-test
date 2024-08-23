@@ -37,8 +37,11 @@ jobs:
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --region us-east-1 --name mlops-lite-cluster # .replace() with python logic
 
-      - name: Applye Model namespace YAML
+      - name: Apply Model namespace YAML
         run: kubectl apply -f .github/workflows/${{ env.NAMESPACE }}_namespace.yaml
+
+      - name: Enable Istio Sidecar Injection for namespace
+        run: kubectl label namespace ${{ env.NAMESPACE }} istio-injection=enabled
 
       - name: Apply Istio Gateway
         run: kubectl apply -f .github/workflows/${{ env.ISTIO_GATEWAY }}
@@ -52,11 +55,11 @@ jobs:
       - name: Verify InferenceService Deployment
         run: kubectl get inferenceservice ${{ env.MODEL_NAME }} -n ${{ env.NAMESPACE }}
 
-      - name: Get External IP of Istio Ingress Gateway
+      - name: Get External IP (DNS) of Istio Ingress Gateway
         id: get-ip
-        run: echo "::set-output name=ip::$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
-
-      - name: Send InferenceService IP to MLOps Lite Core Service Endpoint
+        run: echo "::set-output name=ip::$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
+            
+      - name: Send InferenceService IP (DNS) to MLOps Lite Core Service Endpoint
         run: |
           curl -X POST "${{ env.MLOPS_CORE_SERVICE_ENDPOINT }}" \
           -H "Content-Type: application/json" \
