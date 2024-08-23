@@ -126,6 +126,7 @@ jobs:
         run: |
           kubectl apply -f .github/workflows/kserve_cluster_role.yaml
           kubectl apply -f .github/workflows/kserve_cluster_role_binding.yaml
+          kubectl rollout restart deployment kserve-controller-manager -n kserve
 
       - name: Enable Horiztonal Scaling
         run: |
