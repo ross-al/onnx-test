@@ -29,6 +29,9 @@ jobs:
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --region us-east-1 --name mlops-lite-cluster-bbk # to replace in python logic
 
+      # Knative instructions
+      # https://knative.dev/docs/install/yaml-install/serving/install-serving-with-yaml
+
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3.6.0
         with:
@@ -52,76 +55,65 @@ jobs:
         run: |
           kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-crds.yaml
 
-      - name: Check and Install Gateway CRD
-        run: |
-          kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-          kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
-
       - name: Install Knative Serving core components
         run: |
           kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-core.yaml
 
-      - name: Install istioctl
-        run: curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.23.0 TARGET_ARCH=x86_64 sh - && sudo mv istio-1.23.0/bin/istioctl /usr/local/bin/
-
       - name: Install Istio
         run: |
-          istioctl install -y
+          kubectl apply -l knative.dev/crd-install=true -f https://github.com/knative/net-istio/releases/download/knative-v1.15.1/istio.yaml
+          kubectl apply -f https://github.com/knative/net-istio/releases/download/knative-v1.15.1/istio.yaml
 
       - name: Install Knative Istio controller
         run: |
           kubectl apply -f https://github.com/knative/net-istio/releases/download/knative-v1.15.1/net-istio.yaml
-
-      - name: Enable sidecar injection on knative-serving namespace
+      
+      - name: Configure Knative DNS
         run: |
-          kubectl label namespace knative-serving istio-injection=enabled
-
-      - name: Apply PeerAuthentication for mTLS
+          kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-default-domain.yaml
+     
+      - name: Enable Horiztonal Scaling
         run: |
-          cat <<EOF | kubectl apply -f -
-          apiVersion: "security.istio.io/v1beta1"
-          kind: "PeerAuthentication"
-          metadata:
-            name: "default"
-            namespace: "knative-serving"
-          spec:
-            mtls:
-              mode: PERMISSIVE
-          EOF
-
-      - name: Verify Istio installation
-        run: |
-          istioctl verify-install
+          kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-hpa.yaml
+     
+      # Cert manager instructions
+      # https://cert-manager.io/docs/installation/
 
       - name: Install cert-manager
         run: |
           kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.yaml
-      
+
+      # Kserve instructions
+      # https://kserve.github.io/website/0.8/admin/serverless/#4-install-kserve
+
       - name: Install KServe
         run: |
           kubectl apply -f https://github.com/kserve/kserve/releases/download/v0.13.0/kserve.yaml
-
 
       - name: Install KServe Built-in ClusterServingRuntimes
         run: |
           kubectl apply -f https://github.com/kserve/kserve/releases/download/v0.13.0/kserve-cluster-resources.yaml
 
-      - name: Install the Knative Istio controller 
-        run: |
-          kubectl apply -f https://github.com/knative/net-istio/releases/download/knative-v1.15.1/net-istio.yaml
+      # Verify Knative + Instio install 
 
-      - name: Fetch the External IP address
-        run: |
+      - name: Fetch Istio istio-ingressgateway
+        run: | 
           kubectl --namespace istio-system get service istio-ingressgateway
 
       - name: Confirm Knative installation
         run: | 
           kubectl get pods -n knative-serving
-
-      - name: Configure Knative DNS
+       
+      # MLOps-lite additional config
+     
+      - name: Enable sidecar injection on knative-serving namespace
         run: |
-          kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-default-domain.yaml
+          kubectl label namespace knative-serving istio-injection=enabled
 
+      - name: Apply Istio "PeerAuthentication"
+        run: | 
+          kubectl apply -f .github/workflows/istio_peer_authentication.yaml
+  
       - name: Apply Kserve cluster role
         run: |
           kubectl apply -f .github/workflows/kserve_cluster_role.yaml
@@ -131,9 +123,7 @@ jobs:
         run: |
           kubectl apply -f .github/workflows/istio_service.yaml
 
-      - name: Enable Horiztonal Scaling
-        run: |
-          kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-hpa.yaml
+
 
 
 
