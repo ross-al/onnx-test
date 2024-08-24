@@ -1,4 +1,4 @@
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: onnx-model-1724529354426-vs # .replace() with python logic
@@ -16,8 +16,7 @@ spec:
     - uri:
         prefix: /v2/health/ready
     - uri: 
-        prefix: /v2/models/onnx-model-1724529354426/ready
-  route:    
+        prefix: /v2/models/onnx-model-1724529354426/ready  
     route:
     - destination:
         host: onnx-model-1724529354426.onnx-model-1724529354426.svc.cluster.local # .replace() with python logic
