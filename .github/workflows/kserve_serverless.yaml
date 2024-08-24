@@ -1,0 +1,146 @@
+name: Install Knative Serving, Istio, Cert-Manager, and KServe
+
+'on':
+  repository_dispatch:
+    types:
+      - deploy-kserve
+
+jobs:
+  install-knative-serving-istio-certmanager-kserve:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.MODEL_DEPLOYMENT_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.MODEL_DEPLOYMENT_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1 # to replace in python logic
+
+      - name: Install the latest stable version of kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x ./kubectl
+          sudo mv ./kubectl /usr/local/bin/kubectl
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --region us-east-1 --name mlops-lite-cluster-bbk # to replace in python logic
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.6.0
+        with:
+          cosign-release: 'v2.4.0'
+      - name: Check cosign install
+        run: cosign version
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+ 
+      - name: Verify Knative Serving images
+        run: |
+          curl -sSL https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-core.yaml \
+            | grep 'gcr.io/' | awk '{print $2}' | sort | uniq \
+            | xargs -n 1 \
+              cosign verify -o text \
+                --certificate-identity=signer@knative-releases.iam.gserviceaccount.com \
+                --certificate-oidc-issuer=https://accounts.google.com
+
+      - name: Install Knative Serving CRDs
+        run: |
+          kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-crds.yaml
+
+      - name: Check and Install Gateway CRD
+        run: |
+          kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+          kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
+
+      - name: Install Knative Serving core components
+        run: |
+          kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-core.yaml
+
+      - name: Install istioctl
+        run: curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.23.0 TARGET_ARCH=x86_64 sh - && sudo mv istio-1.23.0/bin/istioctl /usr/local/bin/
+
+      - name: Install Istio
+        run: |
+          istioctl install -y
+
+      - name: Install Knative Istio controller
+        run: |
+          kubectl apply -f https://github.com/knative/net-istio/releases/download/knative-v1.15.1/net-istio.yaml
+
+      - name: Enable sidecar injection on knative-serving namespace
+        run: |
+          kubectl label namespace knative-serving istio-injection=enabled
+
+      - name: Apply PeerAuthentication for mTLS
+        run: |
+          cat <<EOF | kubectl apply -f -
+          apiVersion: "security.istio.io/v1beta1"
+          kind: "PeerAuthentication"
+          metadata:
+            name: "default"
+            namespace: "knative-serving"
+          spec:
+            mtls:
+              mode: PERMISSIVE
+          EOF
+
+      - name: Verify Istio installation
+        run: |
+          istioctl verify-install
+
+      - name: Install cert-manager
+        run: |
+          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.1/cert-manager.yaml
+      
+      - name: Install KServe
+        run: |
+          kubectl apply -f https://github.com/kserve/kserve/releases/download/v0.13.0/kserve.yaml
+
+
+      - name: Install KServe Built-in ClusterServingRuntimes
+        run: |
+          kubectl apply -f https://github.com/kserve/kserve/releases/download/v0.13.0/kserve-cluster-resources.yaml
+
+      - name: Install the Knative Istio controller 
+        run: |
+          kubectl apply -f https://github.com/knative/net-istio/releases/download/knative-v1.15.1/net-istio.yaml
+
+      - name: Fetch the External IP address
+        run: |
+          kubectl --namespace istio-system get service istio-ingressgateway
+
+      - name: Confirm Knative installation
+        run: | 
+          kubectl get pods -n knative-serving
+
+      - name: Configure Knative DNS
+        run: |
+          kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-default-domain.yaml
+
+      - name: Apply Kserve cluster role
+        run: |
+          kubectl apply -f .github/workflows/kserve_cluster_role.yaml
+          kubectl apply -f .github/workflows/kserve_cluster_role_binding.yaml
+
+      - name: Apply Istio Gateway for Kserve
+        run: |
+          kubectl apply -f .github/workflows/istio_service.yaml
+
+      - name: Enable Horiztonal Scaling
+        run: |
+          kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-hpa.yaml
+
+
+
+    
+
+
+
+
+
+
