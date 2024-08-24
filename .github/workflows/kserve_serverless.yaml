@@ -118,3 +118,17 @@ jobs:
       - name: Enable Horiztonal Scaling
         run: |
           kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-hpa.yaml
+
+
+      # Additional MLOps-Lite Config: 
+
+      - name: Apply Kserve cluster role
+        run: |
+          kubectl apply -f .github/workflows/kserve_cluster_role.yaml
+          kubectl apply -f .github/workflows/kserve_cluster_role_binding.yaml
+
+      - name: Apply Istio Gateway for Kserve
+        run: |
+          kubectl apply -f .github/workflows/istio_service.yaml
+
+
