@@ -49,6 +49,11 @@ jobs:
                 --certificate-identity=signer@knative-releases.iam.gserviceaccount.com \
                 --certificate-oidc-issuer=https://accounts.google.com
 
+
+      - name: Install cert-manager
+        run: |
+          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.yaml
+
       # Add timeout to prevent job failure because webhooks aren't ready
 
       - name: Wait for Cert-Manager to be ready
@@ -95,11 +100,7 @@ jobs:
       
       - name: Verify Istio installation
         run: |
-          istioctl verify-install
-      
-      - name: Install cert-manager
-        run: |
-          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.yaml
+          istioctl verify-install     
       
       - name: Install KServe
         run: |
