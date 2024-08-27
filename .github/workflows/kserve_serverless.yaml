@@ -48,7 +48,15 @@ jobs:
               cosign verify -o text \
                 --certificate-identity=signer@knative-releases.iam.gserviceaccount.com \
                 --certificate-oidc-issuer=https://accounts.google.com
-     
+
+      # Add timeout to prevent job failure because webhooks aren't ready
+
+      - name: Wait for Cert-Manager to be ready
+        run: |
+          kubectl rollout status deployment/cert-manager -n cert-manager --timeout=40s
+          kubectl rollout status deployment/cert-manager-webhook -n cert-manager --timeout=40s
+          kubectl rollout status deployment/cert-manager-cainjector -n cert-manager --timeout=40s
+
       - name: Install Knative Serving CRDs
         run: |
           kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-crds.yaml
@@ -56,18 +64,18 @@ jobs:
       - name: Install Knative Serving core components
         run: |
           kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-core.yaml
-     
+      
       - name: Install istioctl
         run: curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.23.0 TARGET_ARCH=x86_64 sh - && sudo mv istio-1.23.0/bin/istioctl /usr/local/bin/
 
       - name: Install Istio
         run: |
           istioctl install -y
-
+      
       - name: Install Knative Istio controller
         run: |
           kubectl apply -f https://github.com/knative/net-istio/releases/download/knative-v1.15.1/net-istio.yaml
-     
+      
       - name: Enable sidecar injection on knative-serving namespace
         run: |
           kubectl label namespace knative-serving istio-injection=enabled
@@ -91,20 +99,15 @@ jobs:
       
       - name: Install cert-manager
         run: |
-          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.1/cert-manager.yaml
-      
+          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.yaml
       
       - name: Install KServe
         run: |
-          kubectl apply -f https://github.com/kserve/kserve/releases/download/v0.8.0/kserve.yaml
+          kubectl apply -f https://github.com/kserve/kserve/releases/download/v0.13.0/kserve.yaml
       
       - name: Install KServe Built-in ClusterServingRuntimes
         run: |
-          kubectl apply -f https://github.com/kserve/kserve/releases/download/v0.8.0/kserve-runtimes.yaml
-      
-      - name: Install the Knative Istio controller 
-        run: |
-          kubectl apply -f https://github.com/knative/net-istio/releases/download/knative-v1.15.1/net-istio.yaml
+          kubectl apply -f https://github.com/kserve/kserve/releases/download/v0.13.0/kserve-cluster-resources.yaml
       
       - name: Fetch the External IP address
         run: |
@@ -118,14 +121,9 @@ jobs:
         run: |
           kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-default-domain.yaml
       
-
       # Additional MLOps-Lite Config: 
 
       - name: Apply Kserve cluster role
         run: |
           kubectl apply -f .github/workflows/kserve_cluster_role.yaml
           kubectl apply -f .github/workflows/kserve_cluster_role_binding.yaml
-      
-      - name: Apply Istio Gateway for Kserve
-        run: |
-          kubectl apply -f .github/workflows/istio_service.yaml
