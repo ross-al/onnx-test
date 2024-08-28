@@ -41,8 +41,9 @@ jobs:
       - name: Apply Model namespace YAML
         run: kubectl apply -f .github/workflows/${{ env.NAMESPACE }}_namespace.yaml
 
-      - name: Enable Istio Sidecar Injection for namespace
-        run: kubectl label namespace ${{ env.NAMESPACE }} istio-injection=enabled
+      # Remove for testin
+      #- name: Enable Istio Sidecar Injection for namespace
+      #  run: kubectl label namespace ${{ env.NAMESPACE }} istio-injection=enabled
 
       - name: Apply InferenceService YAML
         run: |
