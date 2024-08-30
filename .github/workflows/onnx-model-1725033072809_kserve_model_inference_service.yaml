@@ -5,9 +5,37 @@ metadata:
   namespace: "onnx-model-1725033072809"
 spec:
   predictor:
-    model:
-      modelFormat:
-        name: "onnx"
+    onnx: #Todo make abstract and inject based on model manager
       storageUri: "s3://mlflow-lite-bucket/mlflow-artifacts/28/31a6226753644ef6ac3985c3f7f726ba/artifacts/model"
     minReplicas: 1
     maxReplicas: 1
+
+
+# # Old schema 
+
+# apiVersion: "serving.kserve.io/v1beta1"
+# kind: "InferenceService"
+# metadata:
+#   name: "style-sample"
+# spec:
+#   predictor:
+#     onnx:
+#       storageUri: "gs://kfserving-examples/models/onnx"
+
+
+# # New schema 
+
+# apiVersion: serving.kserve.io/v1beta1
+# kind: "InferenceService"
+# metadata:
+#   name: "onnx-model-1725033072809"
+#   namespace: "onnx-model-1725033072809"
+# spec:
+#   predictor:
+#     model:
+#       protocolVersion: v2 # Must explicitly state protocol with new schema
+#       modelFormat:
+#         name: "onnx"
+#       storageUri: "s3://mlflow-lite-bucket/mlflow-artifacts/28/31a6226753644ef6ac3985c3f7f726ba/artifacts/model"
+#     minReplicas: 1
+#     maxReplicas: 1
