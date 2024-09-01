@@ -6,7 +6,7 @@ metadata:
 spec:
   predictor:
     onnx: #Todo make abstract and inject based on model manager
-      storageUri: "s3://mlflow-lite-bucket/mlflow-artifacts/30/c539b282813142f3bf28a0623c461f98/artifacts/model"
+      storageUri: "s3://mlflow-lite-bucket/mlflow-artifacts/30/c539b282813142f3bf28a0623c461f98/artifacts/model/1/"
     minReplicas: 1
     maxReplicas: 1
 
@@ -36,6 +36,6 @@ spec:
 #       protocolVersion: v2 # Must explicitly state protocol with new schema
 #       modelFormat:
 #         name: "onnx"
-#       storageUri: "s3://mlflow-lite-bucket/mlflow-artifacts/30/c539b282813142f3bf28a0623c461f98/artifacts/model"
+#       storageUri: "s3://mlflow-lite-bucket/mlflow-artifacts/30/c539b282813142f3bf28a0623c461f98/artifacts/model/1/"
 #     minReplicas: 1
 #     maxReplicas: 1
