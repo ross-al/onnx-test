@@ -1,0 +1,12 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: "InferenceService"
+metadata:
+  name: "onnx-model-1725205960727"
+  namespace: "onnx-model-1725205960727"
+spec:
+  predictor:
+    onnx: #Todo make abstract and inject based on model manager
+      storageUri: "s3://mlflow-lite-bucket/mlflow-artifacts/33/eb70283a6c144f37ad3c02c19ab007e8/artifacts/model"
+    minReplicas: 1
+    maxReplicas: 1
+
