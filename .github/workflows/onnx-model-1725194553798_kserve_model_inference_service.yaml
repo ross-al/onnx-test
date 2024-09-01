@@ -1,0 +1,41 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: "InferenceService"
+metadata:
+  name: "onnx-model-1725194553798"
+  namespace: "onnx-model-1725194553798"
+spec:
+  predictor:
+    onnx: #Todo make abstract and inject based on model manager
+      storageUri: "s3://mlflow-lite-bucket/mlflow-artifacts/30/c539b282813142f3bf28a0623c461f98/artifacts/model"
+    minReplicas: 1
+    maxReplicas: 1
+
+
+# # Old schema 
+
+# apiVersion: "serving.kserve.io/v1beta1"
+# kind: "InferenceService"
+# metadata:
+#   name: "style-sample"
+# spec:
+#   predictor:
+#     onnx:
+#       storageUri: "gs://kfserving-examples/models/onnx"
+
+
+# # New schema 
+
+# apiVersion: serving.kserve.io/v1beta1
+# kind: "InferenceService"
+# metadata:
+#   name: "onnx-model-1725194553798"
+#   namespace: "onnx-model-1725194553798"
+# spec:
+#   predictor:
+#     model:
+#       protocolVersion: v2 # Must explicitly state protocol with new schema
+#       modelFormat:
+#         name: "onnx"
+#       storageUri: "s3://mlflow-lite-bucket/mlflow-artifacts/30/c539b282813142f3bf28a0623c461f98/artifacts/model"
+#     minReplicas: 1
+#     maxReplicas: 1
